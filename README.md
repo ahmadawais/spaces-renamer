@@ -3,7 +3,9 @@
   <p align="center">Spaces Renamer</p>
 </h1>
 
-Spaces Renamer is a combination of an application and SIMBL plugin to allow you to rename your spaces.
+Spaces Renamer is a combination of a **SwiftUI menu bar app** and a **SIMBL plugin** that lets you rename your macOS desktop spaces (virtual desktops).
+
+> **v2.0** — rebuilt from scratch with SwiftUI, Swift 5.9+, and native Apple Silicon (M1/M2/M3) support. Requires **macOS 14 (Sonoma)** or later.
 
 <p align="center">
   <img src="smallView.jpg" height="45" ><br>
@@ -22,86 +24,98 @@ Spaces Renamer is a combination of an application and SIMBL plugin to allow you 
 
 Spaces Renamer supports multiple monitors, and highlights the current space in each monitor with an outline.  Here it is [in a video](https://vimeo.com/264878100) if you want to see it in action.
 
-### The Problem
-I want to be able to rename my spaces.  While TotalSpaces has this functionality, it's not free, and it has a bunch of other features that I'm not really interested in.
+## What Changed in v2
 
-### The Solution
-This is a SIMBL plugin and an application.  The SIMBL plugin handles renaming spaces from a saved plist.  The application adds an icon to the status bar that allows you to rename the spaces and update the plist.
+| Before (v1) | After (v2) |
+|---|---|
+| AppKit + Storyboards + XIBs | **SwiftUI** with `MenuBarExtra` |
+| Swift 4 / macOS 10.11+ | **Swift 5.9+ / macOS 14+** |
+| x86_64 only | **Universal (arm64 + x86_64)** — native M1/M2/M3 |
+| LetsMove.framework + AppleScript login items | **`SMAppService`** (ServiceManagement) |
+| 8 source files + storyboard + XIB | **4 lean Swift files** |
 
-## Installation:
-> [!WARNING]  
-> This will not work for M1/M2/Apple Silicon Macs, and may not work for macOS 14.4+. Please scroll down to separate install instructions.
+## Requirements
 
-<ol>
-  <li>Download <a href="https://www.macenhance.com/macforge?macforge://github.com/w0lfschild/macplugins/raw/master/com.alexbeals.SpacesRenamer">MacForge</a>, the newest incarnation of mySIMBL.
-    <ul><li>If it's not compatible, you can download the <a href="https://github.com/w0lfschild/mySIMBL/releases/latest">latest mySIMBL version</a>.</li></ul>
-  </li>
-  <li>
-    Make sure that it's installed, including disabling SIP (use the command <code>csrutil disable</code> in Recovery mode by <a href="https://www.imore.com/how-turn-system-integrity-protection-macos">following this tutorial</a>).  There are additional commands for macOS Catalina, with details under the 'System' tab of MacForge.  After it's installed you can partially re-enable SIP using <code>csrutil enable --without debug --without fs</code>. If you fully enable SIP, Spaces Renamer won't work.
-  </li>
-  <li>
-    Download <a href="https://github.com/dado3212/spaces-renamer/raw/master/build/spaces-renamer.zip">Spaces Renamer</a>.
-  </li>
-  <li>
-    Unzip the downloaded .zip file.
-  </li>
-  <li>
-    Open <code>spaces-renamer.bundle</code> with <code>MacForge.app</code>, or simply drag and drop it in to install it.
-  </li>
-  <li>
-    Run <code>killall -9 Dock</code> in Terminal to restart the Dock application.
-  </li>
-  <li>
-    Run the application 'SpacesRenamer'.  Accept the option to move it to /Applications.  It should be automatically added to your Login Items, but you can check to confirm by going to "System Preferences" > "Users & Groups" > "Login Items" and adding it manually if necessary.
-  </li>
-  <li>
-    Open the 'Spaces Renamer' icon in the top bar and click 'Update Names' (doesn't matter what's in there).  Otherwise the top bar may not appear!
-  </li>
-  </ol>
+- **macOS 14 (Sonoma)** or later
+- **Xcode 15+** to build from source
+- [MacForge](https://www.macenhance.com/macforge) (for the SIMBL bundle that patches the Dock)
+- SIP partially disabled (see installation steps below)
 
-## Installation (M1/M2/Apple Silicon)
+## Building from Source
 
-> [!NOTE]  
-> While this has been stable for months, it relies on a beta version of MacForge, so there may be compatibility issues with other plugins.
+```bash
+# Clone the repo
+git clone https://github.com/dado3212/spaces-renamer.git
+cd spaces-renamer
 
-1. Fully uninstall any current versions of MacForge. This means making sure that MacForgeHelper is quit, the application is deleted, and the Trash is emptied.
-2. Run some commands to clean up some of the lingering folders. **❗️THIS WILL DELETE ANY INSTALLED PLUGINS❗️**.
+# Open in Xcode
+open spaces-renamer.xcodeproj
 ```
-sudo launchctl unload /Library/LaunchDaemons/com.macenhance.MacForge.Injector.plist
-sudo rm -rf "/Library/Application Support/MacEnhance"
-sudo rm /Library/LaunchDaemons/com.macenhance.MacForge.Injector.plist
-sudo rm /Library/PrivilegedHelperTools/com.macenhance.MacForge.Injector
+
+Select the **SpacesRenamer** scheme and build (`⌘B`). The project contains two targets:
+
+| Target | Product | Description |
+|--------|---------|-------------|
+| `SpacesRenamer` | `SpacesRenamer.app` | SwiftUI menu bar app for renaming spaces |
+| `spaces-renamer` | `spaces-renamer.bundle` | SIMBL plugin injected into the Dock |
+
+Both targets build as Universal Binaries (arm64 + x86_64) by default.
+
+## Installation
+
+1. Download or build the latest **SpacesRenamer.app** and **spaces-renamer.bundle**.
+2. Download [MacForge](https://www.macenhance.com/macforge). For Apple Silicon Macs, use the [MacForge 1.2.2 (4) beta](https://github.com/user-attachments/files/20972723/spaces-renamer.zip).
+3. Partially disable SIP. Boot into Recovery Mode and run:
+   ```
+   csrutil disable
+   ```
+   After installation you can partially re-enable:
+   ```
+   csrutil enable --without debug --without fs --without nvram --without kext
+   ```
+4. Install the bundle by opening `spaces-renamer.bundle` with MacForge, or copy it to:
+   ```
+   /Library/Application Support/MacEnhance/Plugins
+   ```
+5. Restart the Dock:
+   ```bash
+   killall -9 Dock
+   ```
+6. Run **SpacesRenamer.app**. It will automatically register as a login item.
+7. Click the Spaces Renamer icon in the menu bar, name your spaces, and press **Update Names**.
+
+## Architecture
+
 ```
-3. Download this zip file ([spaces-renamer.zip](https://github.com/user-attachments/files/16735430/spaces-renamer.zip)). It contains the SpacesRenamer app, spaces-renamer.bundle (1.11.1), and MacForge (an unofficial 1.2.0 Beta 2). **If you're on version macOS 14.4+** you should use [spaces-renamer.zip](https://github.com/user-attachments/files/20972723/spaces-renamer.zip)
- instead, which has MacForge 1.2.2 (4) and should work. You can also try this on non-M1/M2/Apple Silicon Macs.
-4. Open SpacesRenamer.  Accept the option to move it to /Applications.  It should be automatically added to your Login Items, but you can check to confirm by going to "System Preferences" > "Users & Groups" > "Login Items" and adding it manually if necessary.
-5. Open MacForge, which will copy itself to /Applications. Go through all the install instructions and permssions around `csrutil` by disabling SIP (use the command <code>csrutil disable</code> in Recovery mode by <a href="https://www.imore.com/how-turn-system-integrity-protection-macos">following this tutorial</a>).  There are additional commands for macOS Catalina, with details under the 'System' tab of MacForge.  After it's installed you can partially re-enable SIP using <code>csrutil enable --without debug --without fs --without nvram --without kext</code> (thanks to @serkanozkul <a href="https://github.com/dado3212/spaces-renamer/issues/75#issuecomment-1493355618">here</a>). If you fully enable SIP, Spaces Renamer won't work.
-6. Copy the `spaces-renamer.bundle` version to `/Library/Application Support/MacEnhance/Plugins` and run `killall -9 Dock`.
-7. Open the 'Spaces Renamer' icon in the top bar and click 'Update Names' (doesn't matter what's in there).  Otherwise the top bar may not appear!
+SpacesRenamer/
+├── SpacesRenamerApp.swift     # @main SwiftUI App with MenuBarExtra
+├── SpaceManager.swift         # @Observable model — workspace monitoring & plist I/O
+├── ContentView.swift          # Main popover UI
+├── DesktopSnippetView.swift   # Individual desktop card view
+├── SpacesRenamerBridge.h      # Bridging header for private CGS APIs
+├── Assets.xcassets            # App icon, status bar icon, monitor images
+├── Info.plist
+└── SpacesRenamer.entitlements
+
+spaces-renamer/                # SIMBL bundle (Objective-C)
+├── spacesRenamer.m            # Dock injection via ZKSwizzle
+├── ZKSwizzle.{h,m}           # Runtime method swizzling
+└── Info.plist
+```
 
 ## Uninstall
 
-You can trivially uninstall SpacesRenamer by using MacForge to delete the plugin and dragging the app to the Trash. If you want to fully remove MacForge and SpacesRenamer you can do the following:
-1. Fully uninstall MacForge. Quit MacForgeHelper in 'Activity Monitor', and delete the application.
-2. Delete the SpacesRenamer app by dragging it to the Trash.
-3. Empty the Trash.
-4. Run the following commands. This will delete all installed plugins.
-```
-sudo launchctl unload /Library/LaunchDaemons/com.macenhance.MacForge.Injector.plist
-sudo rm -rf "/Library/Application Support/MacEnhance"
-sudo rm /Library/LaunchDaemons/com.macenhance.MacForge.Injector.plist
-sudo rm /Library/PrivilegedHelperTools/com.macenhance.MacForge.Injector
-sudo rm -rf ~/Library/Containers/com.alexbeals.spacesrenamer
-```
+1. Quit SpacesRenamer from Activity Monitor (or click Quit in the menu bar popover).
+2. Delete `SpacesRenamer.app` from `/Applications`.
+3. Remove the bundle from MacForge, or delete it:
+   ```bash
+   sudo rm -rf "/Library/Application Support/MacEnhance/Plugins/spaces-renamer.bundle"
+   ```
+4. Clean up saved data:
+   ```bash
+   rm -rf ~/Library/Containers/com.alexbeals.SpacesRenamer
+   ```
 
-### Debugging Common Issues
-
-**MacForge is automatically downgrading**  
-If you are running into issues where MacForge is downgrading, try uninstall MacForge by deleting the app and emptying Trash, running the `purge.sh` file, restarting your computer, and then installing MacForge again. Make sure when you install you disable automatic upgrading and checks.
-
-**I can't see the icon in the menu bar**  
-Make sure the SpacesRenamer app is actually running (you can check it in Activity Monitor). If it is, it's likely that you just have a lot of icons. See [this comment](https://github.com/dado3212/spaces-renamer/issues/94#issuecomment-2126843231) for some recommendations on how to rearrange your icons to have it be visible.
-
---- 
+---
 
 Donations [are always appreciated](https://www.paypal.com/paypalme2/AlexBeals), but in no way expected.
