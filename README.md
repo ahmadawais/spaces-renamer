@@ -64,7 +64,7 @@ Both targets build as Universal Binaries (arm64 + x86_64) by default.
 ## Installation
 
 1. Download or build the latest **SpacesRenamer.app** and **spaces-renamer.bundle**.
-2. Download [MacForge](https://www.macenhance.com/macforge). For Apple Silicon Macs, use the [MacForge 1.2.2 (4) beta](https://github.com/user-attachments/files/20972723/spaces-renamer.zip).
+2. Download [MacForge](https://www.macenhance.com/macforge). For Apple Silicon Macs you may need the [bundled zip with MacForge 1.2.2 (4) beta + spaces-renamer.bundle](https://github.com/user-attachments/files/20972723/spaces-renamer.zip).
 3. Partially disable SIP. Boot into Recovery Mode and run:
    ```
    csrutil disable
